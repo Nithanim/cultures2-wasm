@@ -13,7 +13,22 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies.web-sys]
 version = "0.3"
-features = [ "console" ]
+features = [
+    'Blob',
+    'console',
+    'Document',
+    'Element',
+    'FileReader',
+    'HtmlCanvasElement',
+    'ImageData',
+    'ProgressEvent',
+    'WebGlBuffer',
+    'WebGlVertexArrayObject',
+    'WebGl2RenderingContext',
+    'WebGlProgram',
+    'WebGlShader',
+    'Window',
+]
 
 [dependencies]
 wasm-bindgen = "0.2.69"
@@ -31,6 +46,7 @@ rayon = "1.5"
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1.1", optional = true }
+futures-channel = "0.3.30"
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
@@ -38,6 +54,11 @@ console_error_panic_hook = { version = "0.1.1", optional = true }
 #
 # Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
 # wee_alloc = { version = "0.4.2", optional = true }
+
+byteorder = "1.5.0"
+regex = "1.10.4"
+derive_builder = "0.20.0"
+casey = "0.4.0"
 
 [patch.crates-io]
 wasm-bindgen = { path = "../../Git/wasm-bindgen" }

@@ -5,6 +5,8 @@ mod tessellate;
 mod pcx;
 mod bmd;
 mod timer;
+mod fromts;
+mod nithanim;
 
 use wasm_bindgen::prelude::*;
 
