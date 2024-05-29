@@ -30,7 +30,7 @@ fn extract_frame(raw_bmd_file: &RawBmdFile, bmd_frame_info: &BmdFrameInfo, palet
     let mut pixel_pointer = raw_bmd_file.row_infos.get(frame_start as usize).unwrap().offset;
 
     let height = frame_count + 1;
-    let data = vec![width * height].into_boxed_slice();
+    let mut data = vec![width * height].into_boxed_slice();
 
     for row_number in 0..frame_count {
         let row = raw_bmd_file.row_infos.get((row_number + frame_start) as usize).unwrap();
@@ -41,7 +41,7 @@ fn extract_frame(raw_bmd_file: &RawBmdFile, bmd_frame_info: &BmdFrameInfo, palet
         let indent = row.indent;
         let mut i = indent;
 
-        let pixel_block_length = pixels[pixel_pointer] & 0xFF;
+        let mut pixel_block_length = pixels[pixel_pointer as usize] & 0xFF;
         pixel_pointer += 1;
 
         while pixel_block_length != 0 {
@@ -54,10 +54,10 @@ fn extract_frame(raw_bmd_file: &RawBmdFile, bmd_frame_info: &BmdFrameInfo, palet
                     let color: Color;
                     let alpha: u8;
                     if frame_type == BmdFrameType::Extended {
-                        color = get_from_palette(palette, pixels[pixel_pointer] & 0xFF);
+                        color = get_from_palette(palette, (pixels[pixel_pointer as usize] & 0xFF) as u32);
                         pixel_pointer += 1;
                         if t4i == Type4AlphaInterpretation::Alpha {
-                            alpha = pixels[pixel_pointer] & 0xFF;
+                            alpha = pixels[pixel_pointer as usize] & 0xFF;
                             pixel_pointer += 1;
                         } else {
                             alpha = 0xFF;
@@ -65,7 +65,7 @@ fn extract_frame(raw_bmd_file: &RawBmdFile, bmd_frame_info: &BmdFrameInfo, palet
                         }
                     } else if frame_type == BmdFrameType::Normal {
                         alpha = 0xFF;
-                        color = get_from_palette(palette, pixels[pixel_pointer] & 0xFF);
+                        color = get_from_palette(palette, (pixels[pixel_pointer as usize] & 0xFF) as u32);
                         pixel_pointer += 1;
                     } else if frame_type == BmdFrameType::Shadow {
                         alpha = 0x80; // Or 0x50?
@@ -87,7 +87,7 @@ fn extract_frame(raw_bmd_file: &RawBmdFile, bmd_frame_info: &BmdFrameInfo, palet
 
                     {
                         // bmp.setPixel(i++, row, color | (alpha << 3 * 8));
-                        let pos = i * 4;
+                        let pos = (i * 4) as usize;
                         data[pos + 0] = alpha;
                         data[pos + 1] = color.r;
                         data[pos + 2] = color.g;
@@ -100,9 +100,9 @@ fn extract_frame(raw_bmd_file: &RawBmdFile, bmd_frame_info: &BmdFrameInfo, palet
                     z += 1;
                 }
             } else {
-                i += (pixel_block_length - 0x80);
+                i += (pixel_block_length - 0x80) as u32;
             }
-            pixel_block_length = pixels[pixel_pointer] & 0xFF;
+            pixel_block_length = pixels[pixel_pointer as usize] & 0xFF;
             pixel_pointer += 1;
         }
     }
@@ -125,7 +125,7 @@ struct ExtractedFrame {
 }
 
 fn get_from_palette(palette: &Palette, idx: u32) -> Color {
-    let pointer = idx * 3;
+    let pointer = (idx * 3) as usize;
     Color {
         r: palette[pointer] & 0xFF,
         g: palette[pointer + 1] & 0xFF,
@@ -192,7 +192,8 @@ pub struct BmdFrameRow {
 fn read_pixels(cursor: &mut Cursor<Box<[u8]>>) -> Box<[u8]> {
     let section_header = read_bmd_section_header(cursor);
     let mut buf = vec![0u8; section_header.length as usize].into_boxed_slice();
-    cursor.read_exact(buf.as_mut_slice())
+    cursor.read_exact(buf.as_mut()).unwrap();
+    buf
 }
 
 

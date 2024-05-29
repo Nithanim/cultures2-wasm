@@ -11,7 +11,7 @@ pub struct CulturesRegistry {
     pub pattern_transitions: HashMap<String, PatternTransition>,
 }
 
-async fn load_palettes(fs: &CulturesFS) -> HashMap<String, GfxPalette256> {
+async fn load_palettes<'a>(fs: &CulturesFS) -> HashMap<String, GfxPalette256> {
     let PATH = "data\\engine2d\\inis\\palettes\\palettes.cif";
     let cif = read_cif(fs.open(PATH.to_owned())).await.unwrap();
 
@@ -28,7 +28,7 @@ async fn load_palettes(fs: &CulturesFS) -> HashMap<String, GfxPalette256> {
     m
 }
 
-async fn load_patterns(fs: &CulturesFS) -> HashMap<String, GfxPattern> {
+async fn load_patterns<'a>(fs: &CulturesFS) -> HashMap<String, GfxPattern> {
     let PATH = "data\\engine2d\\inis\\patterns\\pattern.cif";
     let cif = read_cif(fs.open(PATH.to_owned())).await.unwrap();
 
@@ -45,7 +45,7 @@ async fn load_patterns(fs: &CulturesFS) -> HashMap<String, GfxPattern> {
     m
 }
 
-async fn load_pattern_transitions(fs: &CulturesFS) -> HashMap<String, Transition> {
+async fn load_pattern_transitions<'a>(fs: &CulturesFS) -> HashMap<String, Transition> {
     let PATH = "data\\engine2d\\inis\\patterntransitions\\transitions.cif";
     let cif = read_cif(fs.open(PATH.to_owned())).await.unwrap();
 
@@ -62,7 +62,7 @@ async fn load_pattern_transitions(fs: &CulturesFS) -> HashMap<String, Transition
     m
 }
 
-async fn load_landscapes(fs: &CulturesFS) -> HashMap<String, GfxLandscape> {
+async fn load_landscapes<'a>(fs: &CulturesFS) -> HashMap<String, GfxLandscape> {
     let PATH = "data\\engine2d\\inis\\landscapes\\landscapes.cif";
     let cif = read_cif(fs.open(PATH.to_owned())).await.unwrap();
 
@@ -80,11 +80,11 @@ async fn load_landscapes(fs: &CulturesFS) -> HashMap<String, GfxLandscape> {
     m
 }
 
-pub async fn load_registry(fs: &CulturesFS) -> CulturesRegistry {
+pub async fn load_registry<'a>(fs: &CulturesFS) -> CulturesRegistry {
     return CulturesRegistry {
-        palettes: load_palettes(fs),
-        landscapes: load_landscapes(fs),
-        patterns: load_patterns(fs),
-        pattern_transitions: load_pattern_transitions(fs),
+        palettes: load_palettes(fs).await,
+        landscapes: load_landscapes(fs).await,
+        patterns: load_patterns(fs).await,
+        pattern_transitions: load_pattern_transitions(fs).await,
     };
 }

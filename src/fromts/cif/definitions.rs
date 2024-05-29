@@ -142,6 +142,7 @@ pub struct GfxLandscape {
     pub GfxTransition: HashMap<u8, String>,
 }
 
+#[derive(Clone)]
 pub struct GfxBobLibs {
     pub bmd: String,
     pub shadow: Option<String>,

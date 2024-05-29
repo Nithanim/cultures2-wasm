@@ -26,7 +26,7 @@ pub struct FileInfo {
 }
 
 
-async fn load_fs(datafile: Blob) -> io::Result<CulturesFS> {
+async fn load_fs<'a>(datafile: Blob) -> io::Result<CulturesFS> {
     let fa = FileAbstraction::new(datafile).await;
     let mut view = fa.get_as_cursor_partial(0, 250 * 1024).await;
 
@@ -34,16 +34,16 @@ async fn load_fs(datafile: Blob) -> io::Result<CulturesFS> {
     let dirs = getDirs(header.num_dirs, &mut view).await;
     let files = getFiles(header.num_files, &mut view).await;
 
-    return CulturesFS::new(fa, dirs, files);
+    return Ok(CulturesFS::new(fa, dirs, files).await);
 }
 
 
 async fn getHeader(c: &mut Cursor<Box<[u8]>>) -> io::Result<FSHeader> {
     //let mut c = blob.get_as_cursor(0, 3 * 4).await;
     return Ok(FSHeader {
-        version: c.read_u32()?,
-        num_dirs: c.read_u32()?,
-        num_files: c.read_u32()?,
+        version: c.read_u32::<LittleEndian>()?,
+        num_dirs: c.read_u32::<LittleEndian>()?,
+        num_files: c.read_u32::<LittleEndian>()?,
     });
 }
 
@@ -73,14 +73,14 @@ async fn getDirs(n: u32, view: &mut Cursor<Box<[u8]>>) -> Box<[DirInfo]> {
 }
 
 
-pub struct CulturesFS<'a> {
+pub struct CulturesFS {
     datafile: FileAbstraction,
     files: HashMap<String, FileInfo>,
 }
 
-impl<'a> CulturesFS<'a> {
+impl CulturesFS {
     pub async fn new(fa: FileAbstraction, dirs: Box<[DirInfo]>, files: Box<[FileInfo]>) -> Self {
-        let f: HashMap<String, FileInfo> = files.iter().map(|e| (&e.path, e)).collect();
+        let f: HashMap<String, FileInfo> = files.into_vec().into_iter().map(|e| (e.path.clone(), e)).collect();
 
         Self {
             datafile: fa,
@@ -88,14 +88,14 @@ impl<'a> CulturesFS<'a> {
         }
     }
 
-    pub fn ls(&self) -> &'a HashMap<String, FileInfo> {
+    pub fn ls(&self) -> &HashMap<String, FileInfo> {
         &self.files
     }
 
-    pub fn stats(&self, path: String) -> FileInfo {
-        match self.files.get(path.toLowerCase()) {
-            Ok(o) => return o,
-            Err(_) => panic!(format!("Path not found: {}", path))
+    pub fn stats(&self, path: String) -> &FileInfo {
+        match self.files.get(&path.to_lowercase()) {
+            Some(o) => return o,
+            None => panic!(format!("Path not found: {}", path))
         }
     }
 

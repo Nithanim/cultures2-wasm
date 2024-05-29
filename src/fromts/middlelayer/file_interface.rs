@@ -11,8 +11,8 @@ pub struct FileAbstraction {
 impl FileAbstraction {
     pub async fn new(blob: Blob) -> Self {
         Self {
-            blob,
             size: blob.size() as u64,
+            blob,
         }
     }
 

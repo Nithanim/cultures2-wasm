@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use byteorder::{LittleEndian, ReadBytesExt};
-use crate::fromts::util::{is_eof, read_file, read_fixed_string, read_short_string};
+use crate::fromts::util::{is_eof_vec, read_fixed_string_vec, read_short_string_vec};
 
 pub struct CommonDecoded {
     pub unk1: u8,
@@ -40,7 +40,7 @@ pub fn common_decoding(view: &mut Cursor<Vec<u8>>) -> std::io::Result<CommonDeco
     let mut content = CommonDecoded {
         unk1: view.read_u8()?,
         unk_len: view.read_u32::<LittleEndian>()?, // = header.section_length - 5
-        unk_magic: read_fixed_string(view, 8),
+        unk_magic: read_fixed_string_vec(view, 8),
         length: view.read_u32::<LittleEndian>()?, // width * height
         unk_len_dup: view.read_u32::<LittleEndian>()?, // = header.section_length - 5
         /** @type {Uint8Array=} */
@@ -51,7 +51,7 @@ pub fn common_decoding(view: &mut Cursor<Vec<u8>>) -> std::io::Result<CommonDeco
     let mut count = 0;
     let mut data = vec![0u8; content.length as usize].into_boxed_slice();
 
-    while !is_eof(&view) {
+    while !is_eof_vec(view) {
         let head = view.read_u8()?;
 
         if head > 0x80 {
@@ -77,7 +77,7 @@ pub fn common_decoding2(view: &mut Cursor<Vec<u8>>) -> std::io::Result<CommonDec
     let mut content = CommonDecoded2 {
         unk1: view.read_u8()?,
         unk_len: view.read_u32::<LittleEndian>()?, // = header.section_length - 5
-        unk_magic: read_fixed_string(view, 8),
+        unk_magic: read_fixed_string_vec(view, 8),
         length: view.read_u32::<LittleEndian>()? / 2, // width * height
         unk_len_dup: view.read_u32::<LittleEndian>()?, // = header.section_length - 5
         /** @type {Uint16Array=} */
@@ -88,7 +88,7 @@ pub fn common_decoding2(view: &mut Cursor<Vec<u8>>) -> std::io::Result<CommonDec
     let mut count = 0;
     let mut data = vec![0u16; content.length as usize].into_boxed_slice();
 
-    while is_eof(&view) {
+    while is_eof_vec(&view) {
         let head = view.read_u8().unwrap();
 
         if head > 0x80 {
@@ -115,7 +115,7 @@ pub fn dictionary(view: &mut Cursor<Vec<u8>>) -> std::io::Result<Box<[String]>> 
 
     let mut dictionary = Vec::new();
     for i in 0..len {
-        let str = read_short_string(view);
+        let str = read_short_string_vec(view);
         view.seek(SeekFrom::Current(1)).unwrap();
         dictionary.push(str);
     }
@@ -127,7 +127,7 @@ pub fn raw(view: &mut Cursor<Vec<u8>>) -> std::io::Result<RawDecoded> {
     let mut content = RawDecoded {
         unk1: view.read_u8()?,
         data_len: view.read_u32::<LittleEndian>()?, // = header.section_length - 5
-        unk_magic: read_fixed_string(view, 8),
+        unk_magic: read_fixed_string_vec(view, 8),
         length: view.read_u32::<LittleEndian>()? / 2, // width * height
         unk_len_dup: view.read_u32::<LittleEndian>()?, // = header.section_length - 5
         /** @type {Uint8Array=} */

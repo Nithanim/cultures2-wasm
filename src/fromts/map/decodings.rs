@@ -9,9 +9,11 @@ pub trait Parser {
     async fn parse(&self, blob: Blob) -> std::io::Result<Self::Output>;
 }
 
+/*
 fn test(blob: Blob) {
     MapSectionName::hoixehml.parse(blob).unwrap();
 }
+*/
 
 macro_rules! impl_parser {
     ($en:path, $func:path, $out:ty) => {
@@ -52,7 +54,7 @@ macro_rules! define_map_and_enum {
         )*
         */
 
-        #[derive(Eq, PartialEq, Hash, Copy)]
+        #[derive(Eq, PartialEq, Hash, Copy, Clone)]
         pub enum $enum_name {
             $($variant),*
         }

@@ -1,5 +1,7 @@
 mod parsed;
 pub mod definitions;
+#[cfg(test)]
+mod tests;
 
 use std::io::{BufRead, Cursor, Read, Seek, SeekFrom};
 use std::io::SeekFrom::Current;
@@ -9,7 +11,7 @@ use regex::{Captures, Regex};
 use crate::fromts::cif::definitions::IniCategory;
 use crate::fromts::cif::parsed::reduce_sections;
 use crate::fromts::middlelayer::file_interface::FileAbstraction;
-use crate::fromts::util::{read_file, read_zero_terminated_string, SequentialDataView};
+use crate::fromts::util::{read_file, read_zero_terminated_string};
 
 #[allow(non_snake_case)]
 fn decode_cif(data: &mut [u8]) {

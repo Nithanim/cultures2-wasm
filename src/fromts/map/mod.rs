@@ -6,7 +6,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 use byteorder::{LittleEndian, ReadBytesExt};
 use web_sys::Blob;
 use crate::fromts::map::decodings::{hoix1tme, hoix2tme, hoix3tme, hoix4tme, hoixalme, hoixapme, hoixbpme, hoixdlae, hoixdpae, hoixdtae, hoixehml, hoixrbme, hoixtlml, hoixvlml, hoixzisl, MapSectionName};
-use crate::fromts::util::{is_eof, read_bytes, read_file, read_fixed_string, SequentialDataView};
+use crate::fromts::util::{is_eof_box, read_bytes, read_file, read_fixed_string_box};
 
 pub struct CulturesMapData {
     width: u32,
@@ -28,10 +28,10 @@ pub struct CulturesMapData {
     landscape_job_types: Box<[u8]>,
 }
 
-fn read_header(view: &mut SequentialDataView) -> std::io::Result<Header> {
+fn read_header(view: &mut Cursor<Box<[u8]>>) -> std::io::Result<Header> {
     Ok(Header {
         // map section name, "hoix"
-        tag: read_fixed_string(view, 8),
+        tag: read_fixed_string_box(view, 8),
         unk1: view.read_u32::<LittleEndian>()?,
         section_length: view.read_u32::<LittleEndian>()?,
         unk2: view.read_u32::<LittleEndian>()?,
@@ -63,7 +63,7 @@ async fn read_map_data(blob: Blob) -> std::io::Result<CulturesMapData> {
     let mut section_headers: HashMap<MapSectionName, Header> = HashMap::new();
     let mut section_datas: HashMap<MapSectionName, Vec<u8>> = HashMap::new();
 
-    let mut cursor = Cursor::new(read_file(blob).await.to_vec());
+    let mut cursor = Cursor::new(read_file(blob).await.to_vec().into_boxed_slice());
 
     loop {
         let mut buf = [0u8; 0x20];
@@ -81,7 +81,7 @@ async fn read_map_data(blob: Blob) -> std::io::Result<CulturesMapData> {
             cursor.seek(SeekFrom::Current(header.section_length as i64)).unwrap();
         }
 
-        if is_eof(&cursor) {
+        if is_eof_box(&cursor) {
             break;
         }
     }

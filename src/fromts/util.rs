@@ -11,14 +11,27 @@ use web_sys::js_sys::Uint8Array;
 
 pub fn read_normal_string(view: &mut Cursor<Box<[u8]>>) -> String {
     let len = view.read_u32::<LittleEndian>().unwrap();
-    read_fixed_string(view, len as usize)
+    read_fixed_string_box(view, len as usize)
 }
 pub fn read_short_string(view: &mut Cursor<Box<[u8]>>) -> String {
     let len = view.read_u8().unwrap();
-    read_fixed_string(view, len as usize)
+    read_fixed_string_box(view, len as usize)
 }
 
-pub fn read_fixed_string(view: &mut Cursor<Box<[u8]>>, size: usize) -> String {
+pub fn read_short_string_vec(view: &mut Cursor<Vec<u8>>) -> String {
+    let len = view.read_u8().unwrap();
+    read_fixed_string_vec(view, len as usize)
+}
+
+pub fn read_fixed_string_box(view: &mut Cursor<Box<[u8]>>, size: usize) -> String {
+    // String is fixed length, so we have to add the NULL termination manually
+    let mut buffer = vec![0u8; size];
+    view.read_exact(buffer.as_mut_slice()).unwrap();
+
+    String::from_utf8(buffer).unwrap()
+}
+
+pub fn read_fixed_string_vec(view: &mut Cursor<Vec<u8>>, size: usize) -> String {
     // String is fixed length, so we have to add the NULL termination manually
     let mut buffer = vec![0u8; size];
     view.read_exact(buffer.as_mut_slice()).unwrap();
@@ -37,7 +50,7 @@ pub fn read_zero_terminated_string(view: &mut Cursor<Box<[u8]>>) -> String {
     String::from_utf8(buf).unwrap().to_owned()
 }
 
-pub fn read_bytes<const N: usize>(cursor: &mut Cursor<Box<[u8]>>, size: usize) -> std::io::Result<[u8; N]> {
+pub fn read_bytes<const N: usize>(cursor: &mut Cursor<Vec<u8>>, size: usize) -> std::io::Result<[u8; N]> {
     let mut buffer = [0u8; N];
     cursor.read_exact(&mut buffer)?;
     Ok(buffer)
@@ -76,7 +89,11 @@ pub async fn read_file(blob: Blob) -> Uint8Array {
     rx.await.unwrap().unwrap()
 }
 
-pub fn is_eof<A>(cursor: &Cursor<Vec<A>>) -> bool {
+pub fn is_eof_box<A>(cursor: &Cursor<Box<[A]>>) -> bool {
+    cursor.position() as usize == cursor.get_ref().len()
+}
+
+pub fn is_eof_vec<A>(cursor: &Cursor<Vec<A>>) -> bool {
     cursor.position() as usize == cursor.get_ref().len()
 }
 
